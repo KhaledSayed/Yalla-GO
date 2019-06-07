@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using CarPooling.DTO;
+using CarPooling.Helpers;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace CarPooling.Controllers
 {
@@ -12,9 +16,30 @@ namespace CarPooling.Controllers
     {
         // GET api/values
         [HttpGet]
-        public ActionResult<IEnumerable<string>> Get()
+        public async Task<IActionResult> Get()
         {
-            return new string[] { "value1", "value2" };
+
+            using (HttpClient client = new HttpClient())
+            {
+                // Call asynchronous network methods in a try/catch block to handle exceptions
+                try
+                {
+                    HttpResponseMessage response = await client.GetAsync("https://maps.googleapis.com/maps/api/directions/json?origin=Golf City Mall&destination=Modern Academyin Maadi&key=AIzaSyCezD7oizzzd8QqHw5tVSveIxjyemdpwVU&language=ar");
+                    response.EnsureSuccessStatusCode();
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    // Above three lines can be replaced with new helper method below
+                    // string responseBody = await client.GetStringAsync(uri);
+                    var x =  JsonConvert.DeserializeObject<Directions>(responseBody);
+                    return Ok(new TripInfoDto { EncodedRoute = x.Routes[0].OverviewPolyline , Info = x.Routes[0].Legs[0] , ExcpectedPayment = await TripHelper.calculateTripFeesRange(x)});
+                }
+                catch (HttpRequestException e)
+                {
+                    Console.WriteLine("\nException Caught!");
+                    Console.WriteLine("Message :{0} ", e.Message);
+                }
+            }
+
+            return null;
         }
 
         // GET api/values/5

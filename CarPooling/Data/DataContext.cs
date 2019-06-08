@@ -1,5 +1,6 @@
 ﻿using CarPooling.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +11,14 @@ namespace CarPooling.Data
     public class DataContext : DbContext
     {
 
-        public DataContext(DbContextOptions<DataContext> options) : base(options)
+        public IConfiguration Configuration { get; }
+
+
+        public DataContext(IConfiguration configuration)
         {
-            
+            Configuration = configuration;
         }
+        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -27,7 +32,8 @@ namespace CarPooling.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer(@"Data Source=.;Initial Catalog=YALLA_GO;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False",
+                string con = Configuration["ConnectionStrings:Default"];
+                optionsBuilder.UseSqlServer(Configuration["ConnectionStrings:Default"],
                     x => x.UseNetTopologySuite());
               
             }

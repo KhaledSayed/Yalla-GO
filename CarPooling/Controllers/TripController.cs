@@ -57,7 +57,7 @@ namespace CarPooling.Controllers
                     // Above three lines can be replaced with new helper method below
                     // string responseBody = await client.GetStringAsync(uri);
                     var x = JsonConvert.DeserializeObject<Directions>(responseBody);
-
+                    x.Routes[0].Legs[0].Steps = null;
                     return Ok(new TripInfoDto { EncodedRoute = x.Routes[0].OverviewPolyline, Info = x.Routes[0].Legs[0], ExcpectedPayment = await TripHelper.calculateTripFeesRange(x) });
                 }
                 catch (HttpRequestException e)

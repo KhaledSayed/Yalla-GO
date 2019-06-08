@@ -36,6 +36,7 @@ namespace CarPooling
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddDbContext<DataContext>();
             services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IDriverRepository, DriverRepositoy>();
             services.AddScoped<IClientTripRepository, ClientTripRepository>();
             services.AddScoped<ITripRepository, TripRepository>();
@@ -52,7 +53,8 @@ namespace CarPooling
             });
 
             services.AddSignalR();
-            
+            services.AddCors();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

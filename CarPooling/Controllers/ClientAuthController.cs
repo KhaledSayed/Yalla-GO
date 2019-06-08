@@ -51,7 +51,7 @@ namespace CarPooling.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(DriverForLoginDto userForLoginDto)
+        public async Task<IActionResult> Login([FromBody]  DriverForLoginDto userForLoginDto)
         {
 
             // throw new Exception("Nooooooo");

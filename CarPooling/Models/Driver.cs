@@ -25,11 +25,13 @@ namespace CarPooling.Models
         public Car CurrentCar { get; set; }
 
         public int CarId { get; set; }
+        public ICollection<Connection> Connections { get; set; }
 
         public Status Status { get; set; }
         public Driver()
         {
             Trips = new Collection<Trip>();
+            Connections = new Collection<Connection>();
         }
     }
 }

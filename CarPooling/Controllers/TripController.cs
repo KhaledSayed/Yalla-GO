@@ -8,6 +8,7 @@ using System.Web;
 using CarPooling.DTO;
 using CarPooling.Helpers;
 using CarPooling.Models;
+using CarPooling.Models.enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NetAd.Repository;
@@ -24,12 +25,14 @@ namespace CarPooling.Controllers
         private readonly ITripRepository tripRepository;
         private readonly IUserRepository userRepository;
         private readonly IDriverRepository driverRepository;
+        private readonly IClientTripRepository clientTripRepository;
 
-        public TripController(ITripRepository tripRepository,IUserRepository userRepository,IDriverRepository driverRepository)
+        public TripController(ITripRepository tripRepository,IUserRepository userRepository,IDriverRepository driverRepository,IClientTripRepository clientTripRepository)
         {
             this.tripRepository = tripRepository;
             this.userRepository = userRepository;
             this.driverRepository = driverRepository;
+            this.clientTripRepository = clientTripRepository;
         }
         // GET: api/<controller>
         [HttpGet("check")]
@@ -126,7 +129,7 @@ namespace CarPooling.Controllers
                        await getDirectionInfo(new TripCheckQuery { OriginLat = tripReserveDto.OriginLocation.Lat, OriginLng = tripReserveDto.OriginLocation.Lng, DestinationLat = tripReserveDto.DistanceLocation.Lat, DestinationLng = tripReserveDto.DistanceLocation.Lng })
                         );
 
-                    trip.ExpectedRoad = expectedPoints;
+                    //trip.ExpectedRoad = expectedPoints;
 
                     tripRepository.Add(newTrip);
 
@@ -173,6 +176,126 @@ namespace CarPooling.Controllers
                 }
             }
             
+        }
+
+        [HttpPut("{id}/clients/{clientId}/pick")]
+        [Authorize]
+        public async Task<IActionResult> PickClient(int id,int clientId)
+        {
+            string driverId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            var trip = await this.tripRepository.FindOneById(id);
+
+            if (trip == null) return NotFound();
+            if (trip.Status == Models.enums.TripStatus.ENDED) return UnprocessableEntity();
+
+            var driver = await this.userRepository.FindOneById(int.Parse(driverId));
+
+            if (driver == null || driver.Role == UserType.Driver.ToString()) return Unauthorized();
+
+            if (!await this.driverRepository.IsDriverOfTrip(id, driver.Id)) return Unauthorized();
+
+            var clientTrip = trip.Clients.FirstOrDefault(c => c.ClientId == clientId);
+
+            if (clientTrip == null) return BadRequest();
+
+            clientTrip.Status = ClientTripStatus.JOINED;
+            clientTrip.StartedAt = DateTime.Now;
+
+            trip.Status = TripStatus.RUNNING;
+
+            this.tripRepository.Update(trip);
+            this.clientTripRepository.Update(clientTrip);
+
+            if(await tripRepository.SaveAll() && await  clientTripRepository.SaveAll())
+            {
+                return Ok(trip);
+            }
+            else
+            {
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPut("{id}/clients/{clientId}/check-payment")]
+        [Authorize]
+        public async Task<IActionResult> CheckPayment(int id, int clientId)
+        {
+            string driverId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            var trip = await this.tripRepository.FindOneById(id);
+
+            if (trip == null) return NotFound();
+            if (trip.Status == Models.enums.TripStatus.ENDED) return UnprocessableEntity();
+
+            var driver = await this.userRepository.FindOneById(int.Parse(driverId));
+
+            if (driver == null || driver.Role == UserType.Driver.ToString()) return Unauthorized();
+
+            if (!await this.driverRepository.IsDriverOfTrip(id, driver.Id)) return Unauthorized();
+
+            var clientTrip = trip.Clients.FirstOrDefault(c => c.ClientId == clientId);
+
+            if (clientTrip == null) return BadRequest();
+
+            clientTrip.Status = ClientTripStatus.JOINED;
+            clientTrip.StartedAt = DateTime.Now;
+
+            trip.Status = TripStatus.RUNNING;
+
+            this.tripRepository.Update(trip);
+            this.clientTripRepository.Update(clientTrip);
+
+            if (await tripRepository.SaveAll() && await clientTripRepository.SaveAll())
+            {
+                return Ok(trip);
+            }
+            else
+            {
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPut("{id}/clients/{clientId}/pay")]
+        [Authorize]
+        public async Task<IActionResult> Pay(int id, int clientId)
+        {
+            string driverId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            var trip = await this.tripRepository.FindOneById(id);
+
+            if (trip == null) return NotFound();
+            if (trip.Status == Models.enums.TripStatus.ENDED) return UnprocessableEntity();
+
+            var driver = await this.userRepository.FindOneById(int.Parse(driverId));
+
+            if (driver == null || driver.Role == UserType.Driver.ToString()) return Unauthorized();
+
+            if (!await this.driverRepository.IsDriverOfTrip(id, driver.Id)) return Unauthorized();
+
+            var clientTrip = trip.Clients.FirstOrDefault(c => c.ClientId == clientId);
+
+            if (clientTrip == null) return BadRequest();
+
+            clientTrip.Status = ClientTripStatus.LEAVED;
+            clientTrip.LeavedAt = DateTime.Now;
+
+            trip.Status = TripStatus.RUNNING;
+
+            this.tripRepository.Update(trip);
+            this.clientTripRepository.Update(clientTrip);
+
+            if (await tripRepository.SaveAll() && await clientTripRepository.SaveAll())
+            {
+                return Ok(trip);
+            }
+            else
+            {
+                return StatusCode(500);
+            }
         }
 
 

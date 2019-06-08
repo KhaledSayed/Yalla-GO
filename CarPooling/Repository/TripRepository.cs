@@ -37,12 +37,11 @@ namespace NetAd.Repository
         {
 
             return await context.Trips
-                .Include(t => t.ExpectedRoad)
                 .Include(t => t.Clients)
                 .Include(t => t.Points)
                 .FirstOrDefaultAsync(t =>
                         t.Status != TripStatus.ENDED && t.Clients.Where(c => c.Status == ClientTripStatus.JOINED).Count() < 3 &&
-                        t.ExpectedRoad.Where(p => p.Location.Distance(originPoint) < AwayDistanceInM).Count() >= 1 &&
+                        t.Points.LastOrDefault(p => p.Location.Distance(originPoint) < AwayDistanceInM) != null &&
                         t.FinalLocation.Location.Distance(destPoint) < AwayDistanceInM);
         }
     }

@@ -24,13 +24,22 @@ namespace NetAd.Repository
             return await context.Drivers.ToListAsync();
         }
 
+        public async Task<Driver> FindDriverWithConnectionId(string connectionId)
+        {
+            return await this.context.Drivers.Include(d => d.Connections).FirstOrDefaultAsync(d => d.Connections.FirstOrDefault(c => c.ConnectionID == connectionId) != null);
+        }
+
         public async Task<Driver> FindOneById(int Id)
         {
        
                 return await context.Drivers.FirstOrDefaultAsync(c => c.Id == Id);
-         
-           
+        }
 
+        public async Task<bool> IsDriverOfTrip(int tripId, int driverId)
+        {
+            return await this.context.Drivers
+                .Include(d => d.Trips)
+                .FirstOrDefaultAsync(d => d.Id == driverId && d.Trips.FirstOrDefault(t => t.Id == tripId) != null) != null;
         }
 
         public async Task<Driver> NearestOnlineAndFreeDriver(double distance, IPoint nearestPoint)
@@ -40,6 +49,11 @@ namespace NetAd.Repository
                 .FirstOrDefaultAsync(d => d.Status == Status.ONLINE && d.Location.Distance(nearestPoint) < distance &&
                  d.Trips.Where(t => t.Status != TripStatus.ENDED).Count() > 0
                 );
+        }
+
+        public Task<Driver> NearestOnlineAndFreeDriver(IPoint nearestPoint, double distance)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using CarPooling.Data;
+using CarPooling.Hubs;
+using CarPooling.Repository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -12,6 +16,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using NetAd.Repository;
 
 namespace CarPooling
 {
@@ -29,6 +35,24 @@ namespace CarPooling
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddDbContext<DataContext>();
+            services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<IDriverRepository, DriverRepositoy>();
+            services.AddScoped<IClientTripRepository, ClientTripRepository>();
+            services.AddScoped<ITripRepository, TripRepository>();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration["JwtToken:SecretKey"])),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            });
+
+            services.AddSignalR();
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -42,12 +66,20 @@ namespace CarPooling
             {
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
+                app.UseDeveloperExceptionPage();
+
             }
 
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
             // app.UseHttpsRedirection();
+
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<DriverHub>("/driver");
+            });
             app.UseAuthentication();
             app.UseMvc();
+            
 
         }
     }

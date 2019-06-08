@@ -13,5 +13,9 @@ namespace NetAd.Repository
        Task<Driver> FindOneById(int Id);
 
         Task<Driver> NearestOnlineAndFreeDriver(IPoint nearestPoint,double distance);
+
+        Task<bool> IsDriverOfTrip(int tripId, int driverId);
+
+        Task<Driver> FindDriverWithConnectionId(string connectionId);
     }
 }

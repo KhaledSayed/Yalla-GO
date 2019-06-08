@@ -12,7 +12,7 @@ namespace CarPooling.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController : ControllerBase
+    public class TestController : ControllerBase
     {
         // GET api/values
         [HttpGet]

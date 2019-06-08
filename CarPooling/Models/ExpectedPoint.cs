@@ -12,7 +12,7 @@ namespace CarPooling.Models
     {
 
         [Key]
-        int Id; 
+        public int Id { get; set; }
 
         public Item Distance { get; set; }
 

@@ -25,7 +25,6 @@ namespace CarPooling.Models
 
         public ICollection<TripPointAtTime> Points { get; set; }
 
-        public ICollection<ExpectedPoint> ExpectedRoad { get; set; }
 
         [ForeignKey("DriverId")]
         public virtual Driver Driver { get; set; }
@@ -39,7 +38,6 @@ namespace CarPooling.Models
         {
             Clients = new Collection<ClientTrip>();
             Points = new Collection<TripPointAtTime>();
-            ExpectedRoad = new Collection<ExpectedPoint>();
         }
     }
 }

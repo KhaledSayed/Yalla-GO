@@ -12,9 +12,9 @@ namespace CarPooling.Models
 
         public string LicenseNo { get; set; }
 
-        public Driver Driver { get; set; }
+      //  public Driver Driver { get; set; }
 
-        public int DriverId { get; set; }
+    //    public int DriverId { get; set; }
 
     }
 }

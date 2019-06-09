@@ -11,10 +11,8 @@ namespace CarPooling.DTO
 {
     public class DriverForLoginDto 
     {
-        [EmailAddress]
         public string Email { get; set; }
 
-        [MinLength(6, ErrorMessage = "Password length must be more than 6 characters")]
         public string Password { get; set; }
 
     }

@@ -1,6 +1,7 @@
 ﻿using CarPooling.Models.enums;
 using GeoAPI.Geometries;
 using NetTopologySuite.Geometries;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,7 +15,11 @@ namespace CarPooling.Models
 
         public int Id { get; set; }
         public int ClientId { get; set; }
+        [JsonIgnore]
         public Client Client { get; set; }
+
+        public int TripId { get; set; }
+
 
         public Place FromLocation { get; set; }
         public Place ToLocation { get; set; }

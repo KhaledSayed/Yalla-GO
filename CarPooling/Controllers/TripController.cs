@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 using System.Web;
 using CarPooling.DTO;
 using CarPooling.Helpers;
+using CarPooling.Hubs;
 using CarPooling.Models;
 using CarPooling.Models.enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using NetAd.Repository;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
@@ -22,21 +24,23 @@ namespace CarPooling.Controllers
     [Route("api/trips")]
     public class TripController : Controller
     {
+        private readonly IHubContext<DriverHub> _HubContext;
         private readonly ITripRepository tripRepository;
         private readonly IUserRepository userRepository;
         private readonly IDriverRepository driverRepository;
         private readonly IClientTripRepository clientTripRepository;
 
-        public TripController(ITripRepository tripRepository,IUserRepository userRepository,IDriverRepository driverRepository,IClientTripRepository clientTripRepository)
+        public TripController(IHubContext<DriverHub> _hubContext, ITripRepository tripRepository,IUserRepository userRepository,IDriverRepository driverRepository,IClientTripRepository clientTripRepository)
         {
+            _HubContext = _hubContext;
             this.tripRepository = tripRepository;
             this.userRepository = userRepository;
             this.driverRepository = driverRepository;
             this.clientTripRepository = clientTripRepository;
         }
         // GET: api/<controller>
-        [HttpGet("check")]
-        public async Task<IActionResult> Get([FromQuery] TripCheckQuery query)
+        [HttpPost("check")]
+        public async Task<IActionResult> Get([FromBody] TripCheckQuery query)
         {
             using (HttpClient client = new HttpClient())
             {
@@ -75,6 +79,11 @@ namespace CarPooling.Controllers
         [Authorize]
         public async Task<IActionResult> Post([FromBody] TripReserveDto tripReserveDto)
         {
+
+            await _HubContext.Clients.All.SendAsync("Driver", "Hello From Another Application");
+            return Ok();
+
+
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             string userRole = User.FindFirstValue(ClaimTypes.Role);
             var currentUser = await this.userRepository.FindOneById(int.Parse(userId));
@@ -92,9 +101,10 @@ namespace CarPooling.Controllers
 
             if (trip == null)
             {
-                var driver = await driverRepository.NearestOnlineAndFreeDriver(originPoint,500);
-
-                if(driver == null)
+               Driver driver = await this.driverRepository.FindAnyDriver();
+                await _HubContext.Clients.All.SendAsync("Driver", "Hello From Another Application");
+                return Ok();
+                if (driver == null)
                 {
                     return UnprocessableEntity();
                 }
@@ -107,23 +117,30 @@ namespace CarPooling.Controllers
                         DriverId = driver.Id,
                         Status = Models.enums.TripStatus.PICKING_USER,
                     };
-
+                    tripRepository.Add(newTrip);
+                    await this.tripRepository.SaveAll();
+                    
                     var clientInTrip = new ClientTrip()
                     {
                         ClientId = currentUser.Id,
                         Status = Models.enums.ClientTripStatus.WAITING_FOR_DRIVER,
                         FromLocation = originPlace,
                         ToLocation = destantPlace,
-                        StartedAt = DateTime.Now
+                        StartedAt = DateTime.Now,
 
                     };
 
-                    var point = new ClientTripPointAtTime { ClientId = currentUser.Id, TripId = trip.Id, Location = originPoint, Time = DateTime.Now };
+                    newTrip.Clients.Add(clientInTrip);
+                    tripRepository.Add(newTrip);
+                    await this.tripRepository.SaveAll();
+
+                    var point = new ClientTripPointAtTime { ClientId = currentUser.Id, TripId = newTrip.Id, Location = originPoint, Time = DateTime.Now };
 
 
                     clientInTrip.Points.Add(point);
 
-                    newTrip.Clients.Add(clientInTrip);
+                    clientTripRepository.Add(clientInTrip);
+                    await this.clientTripRepository.SaveAll();
 
                     var expectedPoints = TripHelper.convertFromDirectionToListOfExpectedRoutes(
                        await getDirectionInfo(new TripCheckQuery { OriginLat = tripReserveDto.OriginLocation.Lat, OriginLng = tripReserveDto.OriginLocation.Lng, DestinationLat = tripReserveDto.DistanceLocation.Lat, DestinationLng = tripReserveDto.DistanceLocation.Lng })
@@ -240,14 +257,7 @@ namespace CarPooling.Controllers
 
             if (clientTrip == null) return BadRequest();
 
-            clientTrip.Status = ClientTripStatus.JOINED;
-            clientTrip.StartedAt = DateTime.Now;
-
-            trip.Status = TripStatus.RUNNING;
-
-            this.tripRepository.Update(trip);
-            this.clientTripRepository.Update(clientTrip);
-
+       //     List<PointOfLocationOccurenceDto> pointsOccuerence = await t
             if (await tripRepository.SaveAll() && await clientTripRepository.SaveAll())
             {
                 return Ok(trip);

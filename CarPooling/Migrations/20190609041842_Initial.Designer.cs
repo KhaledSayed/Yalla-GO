@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CarPooling.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20190608095238_Update-Database")]
-    partial class UpdateDatabase
+    [Migration("20190609041842_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -21,23 +21,6 @@ namespace CarPooling.Migrations
                 .HasAnnotation("ProductVersion", "2.2.4-servicing-10062")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-            modelBuilder.Entity("CarPooling.Models.Car", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("DriverId");
-
-                    b.Property<string>("LicenseNo");
-
-                    b.Property<string>("Model");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Car");
-                });
 
             modelBuilder.Entity("CarPooling.Models.ChatTrip", b =>
                 {
@@ -90,7 +73,7 @@ namespace CarPooling.Migrations
 
                     b.Property<int?>("ToLocationId");
 
-                    b.Property<int?>("TripId");
+                    b.Property<int>("TripId");
 
                     b.HasKey("Id");
 
@@ -254,8 +237,6 @@ namespace CarPooling.Migrations
                 {
                     b.HasBaseType("CarPooling.Models.User");
 
-                    b.Property<int>("CarId");
-
                     b.Property<DateTime>("CreatedAt");
 
                     b.Property<DateTime>("LastOnlineAt");
@@ -265,10 +246,6 @@ namespace CarPooling.Migrations
                     b.Property<int>("Status");
 
                     b.Property<DateTime>("UpdatedAt");
-
-                    b.HasIndex("CarId")
-                        .IsUnique()
-                        .HasFilter("[CarId] IS NOT NULL");
 
                     b.HasDiscriminator().HasValue("Driver");
                 });
@@ -306,7 +283,8 @@ namespace CarPooling.Migrations
 
                     b.HasOne("CarPooling.Models.Trip")
                         .WithMany("Clients")
-                        .HasForeignKey("TripId");
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("CarPooling.Models.ClientTripPointAtTime", b =>
@@ -357,14 +335,6 @@ namespace CarPooling.Migrations
                     b.HasOne("CarPooling.Models.Trip", "Trip")
                         .WithMany("Points")
                         .HasForeignKey("TripId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("CarPooling.Models.Driver", b =>
-                {
-                    b.HasOne("CarPooling.Models.Car", "CurrentCar")
-                        .WithOne("Driver")
-                        .HasForeignKey("CarPooling.Models.Driver", "CarId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618

@@ -1,5 +1,6 @@
 ﻿using CarPooling.Models.enums;
 using GeoAPI.Geometries;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -26,6 +27,7 @@ namespace CarPooling.Models
         public ICollection<TripPointAtTime> Points { get; set; }
 
 
+        [JsonIgnore]
         [ForeignKey("DriverId")]
         public virtual Driver Driver { get; set; }
 

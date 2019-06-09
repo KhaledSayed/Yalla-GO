@@ -17,5 +17,7 @@ namespace NetAd.Repository
         Task<bool> IsDriverOfTrip(int tripId, int driverId);
 
         Task<Driver> FindDriverWithConnectionId(string connectionId);
+
+        Task<Driver> FindAnyDriver();
     }
 }

@@ -52,8 +52,12 @@ namespace CarPooling
                 };
             });
 
+
+            services.AddCors(options => options.AddPolicy("AllowAll", p => p.AllowAnyOrigin()
+                                                            .AllowAnyMethod()
+                                                             .AllowAnyHeader()));
+
             services.AddSignalR();
-            services.AddCors();
 
         }
 
@@ -72,16 +76,17 @@ namespace CarPooling
 
             }
 
-            app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-            // app.UseHttpsRedirection();
-
-            app.UseSignalR(routes =>
-            {
-                routes.MapHub<DriverHub>("/driver");
-            });
             app.UseAuthentication();
+            app.UseCors(builder => builder
+  .AllowAnyHeader()
+  .AllowAnyMethod()
+  .SetIsOriginAllowed((host) => true)
+  .AllowCredentials()
+);
+
+            app.UseSignalR(routes => { routes.MapHub<DriverHub>("/driver"); });
             app.UseMvc();
-            
+
 
         }
     }

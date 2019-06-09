@@ -16,7 +16,7 @@ namespace CarPooling.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Location = table.Column<IPoint>(nullable: true),
-                    Name = table.Column<int>(nullable: false)
+                    Name = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -37,7 +37,7 @@ namespace CarPooling.Migrations
                     Role = table.Column<string>(nullable: true),
                     Discriminator = table.Column<string>(nullable: false),
                     Activated = table.Column<bool>(nullable: true),
-                    Driver_Activated = table.Column<bool>(nullable: true),
+                    Location = table.Column<IPoint>(nullable: true),
                     CreatedAt = table.Column<DateTime>(nullable: true),
                     UpdatedAt = table.Column<DateTime>(nullable: true),
                     LastOnlineAt = table.Column<DateTime>(nullable: true),
@@ -49,24 +49,23 @@ namespace CarPooling.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Car",
+                name: "Connection",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    Model = table.Column<string>(nullable: true),
-                    LicenseNo = table.Column<string>(nullable: true),
-                    DriverId = table.Column<int>(nullable: false)
+                    ConnectionID = table.Column<string>(nullable: false),
+                    UserAgent = table.Column<string>(nullable: true),
+                    Connected = table.Column<bool>(nullable: false),
+                    DriverId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Car", x => x.Id);
+                    table.PrimaryKey("PK_Connection", x => x.ConnectionID);
                     table.ForeignKey(
-                        name: "FK_Car_Users_DriverId",
+                        name: "FK_Connection_Users_DriverId",
                         column: x => x.DriverId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -79,18 +78,11 @@ namespace CarPooling.Migrations
                     FinalLocationId = table.Column<int>(nullable: true),
                     Status = table.Column<int>(nullable: false),
                     DriverId = table.Column<int>(nullable: true),
-                    CarId = table.Column<int>(nullable: true),
                     ClientId = table.Column<int>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Trips", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Trips_Car_CarId",
-                        column: x => x.CarId,
-                        principalTable: "Car",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Trips_Users_ClientId",
                         column: x => x.ClientId,
@@ -159,6 +151,7 @@ namespace CarPooling.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     ClientId = table.Column<int>(nullable: false),
+                    TripId = table.Column<int>(nullable: false),
                     FromLocationId = table.Column<int>(nullable: true),
                     ToLocationId = table.Column<int>(nullable: true),
                     Duration = table.Column<string>(nullable: true),
@@ -166,8 +159,7 @@ namespace CarPooling.Migrations
                     SuggestedPrice = table.Column<string>(nullable: true),
                     Status = table.Column<int>(nullable: false),
                     StartedAt = table.Column<DateTime>(nullable: false),
-                    LeavedAt = table.Column<DateTime>(nullable: false),
-                    TripId = table.Column<int>(nullable: true)
+                    LeavedAt = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -195,7 +187,7 @@ namespace CarPooling.Migrations
                         column: x => x.TripId,
                         principalTable: "Trips",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -219,10 +211,40 @@ namespace CarPooling.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Car_DriverId",
-                table: "Car",
-                column: "DriverId");
+            migrationBuilder.CreateTable(
+                name: "ClientInTripPoints",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Location = table.Column<IPoint>(nullable: true),
+                    Time = table.Column<DateTime>(nullable: false),
+                    ClientId = table.Column<int>(nullable: false),
+                    TripId = table.Column<int>(nullable: false),
+                    ClientTripId = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ClientInTripPoints", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ClientInTripPoints_Users_ClientId",
+                        column: x => x.ClientId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ClientInTripPoints_ClientTrips_ClientTripId",
+                        column: x => x.ClientTripId,
+                        principalTable: "ClientTrips",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ClientInTripPoints_Trips_TripId",
+                        column: x => x.TripId,
+                        principalTable: "Trips",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChatTrips_ClientId",
@@ -237,6 +259,21 @@ namespace CarPooling.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_ChatTrips_TripId",
                 table: "ChatTrips",
+                column: "TripId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ClientInTripPoints_ClientId",
+                table: "ClientInTripPoints",
+                column: "ClientId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ClientInTripPoints_ClientTripId",
+                table: "ClientInTripPoints",
+                column: "ClientTripId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ClientInTripPoints_TripId",
+                table: "ClientInTripPoints",
                 column: "TripId");
 
             migrationBuilder.CreateIndex(
@@ -260,14 +297,14 @@ namespace CarPooling.Migrations
                 column: "TripId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Connection_DriverId",
+                table: "Connection",
+                column: "DriverId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TripPoints_TripId",
                 table: "TripPoints",
                 column: "TripId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Trips_CarId",
-                table: "Trips",
-                column: "CarId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Trips_ClientId",
@@ -296,22 +333,25 @@ namespace CarPooling.Migrations
                 name: "ChatTrips");
 
             migrationBuilder.DropTable(
-                name: "ClientTrips");
+                name: "ClientInTripPoints");
+
+            migrationBuilder.DropTable(
+                name: "Connection");
 
             migrationBuilder.DropTable(
                 name: "TripPoints");
 
             migrationBuilder.DropTable(
+                name: "ClientTrips");
+
+            migrationBuilder.DropTable(
                 name: "Trips");
 
             migrationBuilder.DropTable(
-                name: "Car");
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Places");
-
-            migrationBuilder.DropTable(
-                name: "Users");
         }
     }
 }

@@ -24,6 +24,11 @@ namespace NetAd.Repository
             return await context.Drivers.ToListAsync();
         }
 
+        public async Task<Driver> FindAnyDriver()
+        {
+            return await context.Drivers.LastOrDefaultAsync();
+        }
+
         public async Task<Driver> FindDriverWithConnectionId(string connectionId)
         {
             return await this.context.Drivers.Include(d => d.Connections).FirstOrDefaultAsync(d => d.Connections.FirstOrDefault(c => c.ConnectionID == connectionId) != null);
@@ -42,7 +47,7 @@ namespace NetAd.Repository
                 .FirstOrDefaultAsync(d => d.Id == driverId && d.Trips.FirstOrDefault(t => t.Id == tripId) != null) != null;
         }
 
-        public async Task<Driver> NearestOnlineAndFreeDriver(double distance, IPoint nearestPoint)
+        public async Task<Driver> NearestOnlineAndFreeDriver(IPoint nearestPoint,double distance)
         {
             return await context.Drivers
                 .Include(d => d.Trips)
@@ -51,9 +56,6 @@ namespace NetAd.Repository
                 );
         }
 
-        public Task<Driver> NearestOnlineAndFreeDriver(IPoint nearestPoint, double distance)
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }

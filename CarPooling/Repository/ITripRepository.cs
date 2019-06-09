@@ -1,4 +1,5 @@
-﻿using CarPooling.Models;
+﻿using CarPooling.DTO;
+using CarPooling.Models;
 using GeoAPI.Geometries;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,8 @@ namespace NetAd.Repository
         Task<List<Trip>>  FindAll();
        Task<Trip> FindOneById(int Id);
 
-        Task<Trip> FindTripNearestByLocation(IPoint originPoint,IPoint destintPoint);
+        Task<Trip> FindTripNearestByLocation(IPoint originPoint, IPoint destintPoint);
+
+        Task<List<PointOfLocationOccurenceDto>> FindLocationOccuranceAtSpecificDate(DateTime startTime, DateTime endTime,int tripId);
     }
 }

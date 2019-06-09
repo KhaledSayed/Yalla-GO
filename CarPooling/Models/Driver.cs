@@ -21,10 +21,11 @@ namespace CarPooling.Models
 
         public DateTime LastOnlineAt { get; set; }
 
-        [ForeignKey("CarId")]
-        public Car CurrentCar { get; set; }
+     //   [ForeignKey("CarId")]
+     //   public Car CurrentCar { get; set; }
 
-        public int CarId { get; set; }
+       
+        //public int? CarId { get; set; }
         public ICollection<Connection> Connections { get; set; }
 
         public Status Status { get; set; }

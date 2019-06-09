@@ -19,11 +19,10 @@ namespace CarPooling.Hubs
             this.driverRepository = driverRepository;
         }
 
-        public async Task Online(int driverId ,double lat, double lng)
+        public async Task Online()
         {
-            var driver = await this.driverRepository.FindOneById(driverId);
 
-            driver.Status = Models.enums.Status.ONLINE;
+            await Clients.All.SendAsync("Driver", "You recieved a trip");
         }
 
         public async Task Offline(int driverId, double lat, double lng)
